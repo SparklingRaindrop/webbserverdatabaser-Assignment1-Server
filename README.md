@@ -1,8 +1,5 @@
 # To-do list API
-To-do list API is written in vanilla Node.js that can only run locally.  
-I'm only allowing access from **http://localhost:3000**.  
-If you want to use it from another server, change origin address.  
-`res.setHeader('Access-Control-Allow-Origin', 'http://localhost:3000');`
+To-do list API is written in Node.js that can only run locally.<BR />
 ## Resource
 There is only one resource in To-do list API.
 - http://localhost:5000/todos
@@ -12,6 +9,7 @@ To run server (in terminal)
 node server.js
 ```
 Then server will run on http://localhost:5000/
+
 
 **Get all the tasks**
 ```javascript
