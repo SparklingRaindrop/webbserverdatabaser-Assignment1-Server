@@ -1,23 +1,9 @@
 const http = require('http');
-const PORT = 5000;
+const fs = require('fs/promises');
 
-const tasks = [
-    {
-        "taskName": "Test1",
-        "id": 1,
-        "completion": false,
-    },
-    {
-        "taskName": "Test2",
-        "id": 2,
-        "completion": false,
-    },
-    {
-        "taskName": "Test3",
-        "id": 3,
-        "completion": false,
-    }
-];
+const PORT = 5000;
+const file = './data.json';
+let tasks;
 
 const server = http.createServer((req, res) => {
     res.setHeader('Access-Control-Allow-Origin', 'http://localhost:3000');
@@ -72,6 +58,9 @@ const server = http.createServer((req, res) => {
                         newTask.id = Number(Date.now().toString() + Math.random() * 100000);
                         newTask.completion = data.completion;
                         tasks.push(newTask);
+
+                        save();
+
                         res.setHeader('Location', `/todos/${newTask.id}`);
                         res.statusCode = 201;
                         res.end();
@@ -112,6 +101,9 @@ const server = http.createServer((req, res) => {
                                 ...data,
                             }
                         }
+
+                        save();
+
                         res.statusCode = 204;
                         res.end();
                     } else {
@@ -129,6 +121,9 @@ const server = http.createServer((req, res) => {
         case 'DELETE':
             if (targetIndex > -1) {
                 tasks.splice(targetIndex, 1);
+
+                save();
+
                 res.statusCode = 204;
                 res.end();
             } else {
@@ -140,9 +135,17 @@ const server = http.createServer((req, res) => {
     }
 });
 
+init();
+
 server.listen(PORT, () => {
     console.log(`The server runs on ${PORT}`)
 });
+
+async function init() {
+    const savedData = await read(file);
+    tasks = savedData;
+    console.log(tasks);
+}
 
 function isValid(data, method = 'PUT') {
     const properties = {
@@ -157,4 +160,24 @@ function isValid(data, method = 'PUT') {
         return hasRequiredProps && hasCorrectTypes;
     }
   	return hasRequiredProps && hasCorrectTypes && Object.keys(properties).length === keys.length;
+}
+
+async function read(file){
+    try {
+        const rawData = await fs.readFile(file);
+        const result = await JSON.parse(rawData);
+        console.log('Read file completed');
+        return result;
+    } catch (e) {
+        console.log(e.message);
+    }
+}
+
+async function save(){
+    try {
+        await fs.writeFile(file, JSON.stringify(tasks));
+        console.log('Save completed');
+    } catch (e) {
+        console.log(e.message);
+    }
 }
