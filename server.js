@@ -163,12 +163,13 @@ function isValid(data, method = 'PUT') {
 
 async function read() {
     if (!existsSync(file)) {
-        console.log('Creating a new save file.');
+        console.log('Creating a new save file');
         await fs.writeFile(file, JSON.stringify([]));
+        console.log('Created a new save file');
     }
     try {
         const rawData = await fs.readFile(file);
-        const result = await JSON.parse(rawData);
+        const result = JSON.parse(rawData);
         console.log('Read file completed');
         return result;
     } catch (e) {
