@@ -1,12 +1,16 @@
 # To-do list API
-To-do list API is written in vanilla Node.js that can only run locally.  
-It only allows access from **http://localhost:3000**.  
-If you want to use it from another server, change origin address.  
+- It is written in vanilla Node.js and can only run locally.  
+- It only allows access from **http://localhost:3000**.  
+- If you want to use it from another server, change the header setting.  
 `res.setHeader('Access-Control-Allow-Origin', 'http://localhost:3000');`
+  
 ## Resource
 There is only one resource in To-do list API.
 - http://localhost:5000/todos
+  
 ## How to use it
+- You need [Node.js](https://nodejs.org/en/) in order to run this app.  
+  
 To run server (in terminal)
 ```
 node server.js
@@ -70,7 +74,14 @@ fetch("http://localhost:5000/todos/", {
     }
 });
 ```
-
+**Result**
+```json
+{
+    "taskName": "test task",
+    "id": 16529817896903240,
+    "completion": false
+}
+```
 **Update a task**
 ```javascript
 fetch("http://localhost:5000/todos/16528656609342060", {
@@ -101,7 +112,14 @@ fetch("http://localhost:5000/todos/16528656609342060", {
     }
 });
 ```
-
+**Result**
+```json
+{
+    "taskName": "Pick up a package from Coop",
+    "id": 16528656609342060,
+    "completion": false
+}
+```
 **Delete a task**
 ```javascript
 fetch("http://localhost:5000/todos/16528656609342060", {
