@@ -19,7 +19,7 @@ Then server will run on http://localhost:5000/
 
 **Get all the tasks**
 ```javascript
-fetch("http://localhost:5000/todos")
+fetch('http://localhost:5000/todos')
     .then(res=>res.json())
     .then(json=>console.log(json));
 ```
@@ -46,7 +46,7 @@ fetch("http://localhost:5000/todos")
 
 **Get a single task**
 ```javascript
-fetch("http://localhost:5000/todos/16528656609342060")
+fetch('http://localhost:5000/todos/16528656609342060')
     .then(res=>res.json())
     .then(json=>console.log(json));
 ```
@@ -61,8 +61,8 @@ fetch("http://localhost:5000/todos/16528656609342060")
 
 **Add a new task**
 ```javascript
-fetch("http://localhost:5000/todos/", {
-    method: "POST",
+fetch('http://localhost:5000/todos/', {
+    method: 'POST',
     body: JSON.stringify(
         {
             taskName: 'test task',
@@ -70,7 +70,7 @@ fetch("http://localhost:5000/todos/", {
         }
     ),
     headers: {
-        "Content-Type": "application/json",
+        'Content-Type': 'application/json',
     }
 });
 ```
@@ -84,31 +84,32 @@ fetch("http://localhost:5000/todos/", {
 ```
 **Update a task**
 ```javascript
-fetch("http://localhost:5000/todos/16528656609342060", {
-    method: "PATCH",
+fetch('http://localhost:5000/todos/16528656609342060', {
+    method: 'PATCH',
     body: JSON.stringify(
         {
-            taskName: "Pick up a package from Coop",
+            taskName: 'Pick up a package from Coop',
             completion: false
         }
     ),
     headers: {
-        "Content-Type": "application/json",
+        'Content-Type': 'application/json',
     }
 });
 ```
 
 ```javascript
-fetch("http://localhost:5000/todos/16528656609342060", {
-    method: "PUT",
+fetch('http://localhost:5000/todos/16528656609342060', {
+    method: 'PUT',
     body: JSON.stringify(
         {
-            "taskName": "Pick up a package from Coop",
-            "completion": false
+            taskName: 'Pick up a package from Coop',
+            id: 16528656609342060,
+            completion: false
         }
     ),
     headers: {
-        "Content-Type": "application/json",
+        'Content-Type': 'application/json',
     }
 });
 ```
@@ -122,7 +123,7 @@ fetch("http://localhost:5000/todos/16528656609342060", {
 ```
 **Delete a task**
 ```javascript
-fetch("http://localhost:5000/todos/16528656609342060", {
-    method: "DELETE"
+fetch('http://localhost:5000/todos/16528656609342060', {
+    method: 'DELETE'
 });
 ```
