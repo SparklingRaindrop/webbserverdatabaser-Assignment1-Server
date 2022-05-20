@@ -4,12 +4,11 @@ const { existsSync } = require('fs');
 
 const PORT = 5000;
 const file = './data.json';
-let tasks;
 
 init();
 
 async function init() {
-    tasks = await read(file);
+    const tasks = await read(file);
     
     const server = http.createServer((req, res) => {
         res.setHeader('Access-Control-Allow-Origin', 'http://localhost:3000');
@@ -72,7 +71,7 @@ async function init() {
                             newTask.id = Number(Date.now().toString() + parseInt(Math.random() * 10000));
                             newTask.completion = data.completion;
                             tasks.push(newTask);
-                            save();
+                            save(tasks);
     
                             res.statusCode = 201;
                             res.end(JSON.stringify(newTask));
@@ -126,7 +125,7 @@ async function init() {
                                 }
                             }
     
-                            save();
+                            save(tasks);
     
                             res.statusCode = 200;
                             res.end(JSON.stringify(tasks[targetIndex]));
@@ -151,7 +150,7 @@ async function init() {
                 if (targetIndex > -1) {
                     tasks.splice(targetIndex, 1);
     
-                    save();
+                    save(tasks);
     
                     res.statusCode = 204;
                     res.end();
@@ -221,7 +220,7 @@ async function read() {
     }
 }
 
-async function save() {
+async function save(tasks) {
     try {
         await fs.writeFile(file, JSON.stringify(tasks));
         console.log('Save completed');
