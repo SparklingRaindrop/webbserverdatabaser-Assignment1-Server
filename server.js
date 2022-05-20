@@ -80,7 +80,6 @@ async function init() {
                             res.statusCode = 400;
                             res.end("The body is empty.");
                         }
-                        res.end();
                     });
                 } else {
                     // Wrong directory or no data with the method "POST"
@@ -129,7 +128,6 @@ async function init() {
                             res.statusCode = 400;
                             res.end("The body of the request is invalid.");
                         }
-                        res.end();
                     });
                 } else {
                     // There is no such data with the provided ID 
