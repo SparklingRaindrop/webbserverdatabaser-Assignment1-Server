@@ -47,57 +47,64 @@ async function init() {
                             'Content-Type': 'application/json'
                         });
                         res.end(JSON.stringify(tasks[targetIndex]));
-                    } else {
-                        // There is no data with the provided ID 
+                    } else { 
                         res.statusCode = 404;
-                        res.end();
+                        res.end(`Data with ID[${targetId}] doesn't exist.`);
                     }
                 }
             break;
             case 'POST':
                 if (directory.length === 1) {
+                    let data;
                     req.on('data', (chunk) => {
-                        const data = JSON.parse(chunk);
-                        if(isValid(data)) {
+                        data = JSON.parse(chunk);
+                        if(isValid(data, 'POST')) {
                             const newTask = {};
                             newTask.taskName = data.taskName;
                             newTask.id = Number(Date.now().toString() + parseInt(Math.random() * 10000));
                             newTask.completion = data.completion;
                             tasks.push(newTask);
-    
                             save();
     
-                            res.setHeader('Location', `/todos/${newTask.id}`);
                             res.statusCode = 201;
-                            res.end();
+                            res.end(JSON.stringify(newTask));
                         } else {
                             // Data is not valid
                             res.statusCode = 400;
-                            res.end();
+                            res.end("The body of the request is invalid.");
                         }
+                    });
+                    req.on('end', () => {
+                        console.log(data);
+                        if (!data) {
+                            res.statusCode = 400;
+                            res.end("The body is empty.");
+                        }
+                        res.end();
                     });
                 } else {
                     // Wrong directory or no data with the method "POST"
-                    res.statusCode = 400;
-                    res.end();
+                    res.statusCode = 405;
+                    res.end(`Wrong URL for the ${method} request.`);
                 }
             break;
             case 'PUT':
             case 'PATCH':
                 if(directory.length !== 2) {
-                    // Wrong directory or no data with the method "PUT" & "PATCH"
-                    res.statusCode = 400;
-                    res.end();
+                    // Wrong directory with the method "PUT" & "PATCH"
+                    res.statusCode = 405;
+                    res.end(`Wrong URL for the ${method} request.`);
                     return;
                 }
                 if (targetIndex > -1) {
+                    let data;
                     req.on('data', (chunk) => {
-                        const data = JSON.parse(chunk);
-                        if(isValid(data, method)) {
+                        data = JSON.parse(chunk);
+                        if(isValid(data, method, targetId)) {
                             if (method === 'PUT') {
                                 const newData = {
                                     taskName: data.taskName,
-                                    id: targetId, // TODO: MAKE sure this
+                                    id: data.id,
                                     completion: data.completion,
                                 };
                                 tasks[targetIndex] = newData;
@@ -110,18 +117,24 @@ async function init() {
     
                             save();
     
-                            res.statusCode = 204;
-                            res.end();
+                            res.statusCode = 200;
+                            res.end(JSON.stringify(tasks[targetIndex]));
                         } else {
-                            // Data isn't valid
                             res.statusCode = 400;
-                            res.end();
+                            res.end("The body of the request is invalid.");
                         }
+                    });
+                    req.on('end', () => {
+                        if (!data) {
+                            res.statusCode = 400;
+                            res.end("The body of the request is invalid.");
+                        }
+                        res.end();
                     });
                 } else {
                     // There is no such data with the provided ID 
                     res.statusCode = 404;
-                    res.end();
+                    res.end(`Data with ID[${targetId}] doesn't exist.`);
                 }
             break;
             case 'DELETE':
@@ -135,7 +148,7 @@ async function init() {
                 } else {
                     // There is no such data with the provided ID 
                     res.statusCode = 404;
-                    res.end();
+                    res.end(`Data with ID[${targetId}] doesn't exist.`);
                 }
             break;
         }
@@ -146,19 +159,40 @@ async function init() {
     });
 }
 
-function isValid(data, method = 'PUT') {
+function isValid(data, method = 'PUT', srcID) {
     const properties = {
         completion: "boolean",
+        id: "number",
         taskName: "string"
     };
     const keys = Object.keys(data);
     
     const hasCorrectTypes = keys.every(key => typeof data[key] === properties[key]);
     const hasRequiredProps = keys.every(key => Object.keys(properties).includes(key));
-    if (method === 'PATCH') {
+    if (method === 'POST') {
+        
+        // On POST request, ID will be generated by the server
+        return hasRequiredProps && hasCorrectTypes && !data.id;
+
+    } else if (method === 'PATCH') {
+        
+        // ID is not manipulatable 
+        if (data.id) {
+            return hasRequiredProps && hasCorrectTypes && data.id === srcID;
+        }
         return hasRequiredProps && hasCorrectTypes;
+
     }
-  	return hasRequiredProps && hasCorrectTypes && Object.keys(properties).length === keys.length;
+    console.log(hasRequiredProps,
+        hasCorrectTypes, 
+        Object.keys(properties).length === keys.length,
+        data.id === srcID);
+  	return (
+        hasRequiredProps && 
+        hasCorrectTypes && 
+        Object.keys(properties).length === keys.length &&
+        data.id === srcID
+    );
 }
 
 async function read() {
@@ -173,7 +207,7 @@ async function read() {
         console.log('Read file completed');
         return result;
     } catch (e) {
-        console.log(e.message);
+        console.log('Could not read the data: ', e.message);
     }
 }
 
@@ -182,6 +216,6 @@ async function save() {
         await fs.writeFile(file, JSON.stringify(tasks));
         console.log('Save completed');
     } catch (e) {
-        console.log(e.message);
+        console.log('Could not save the data: ', e.message);
     }
 }
