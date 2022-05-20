@@ -189,7 +189,7 @@ function isValid(data, method = 'PUT', srcID) {
 
     } else if (method === 'PATCH') {
         
-        // ID is not manipulatable 
+        // ID is immutable 
         if (data.id) {
             return hasRequiredProps && hasCorrectTypes && data.id === srcID;
         }
