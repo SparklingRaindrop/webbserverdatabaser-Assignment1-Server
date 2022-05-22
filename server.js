@@ -61,7 +61,7 @@ async function init() {
                             data = JSON.parse(chunk);
                         } catch (e) {
                             res.statusCode = 400;
-                            res.end("The body of the request is invalid.");
+                            res.end("Received wrong type of data. Expected JSON.");
                             return;
                         }
 
@@ -77,13 +77,13 @@ async function init() {
                             res.end(JSON.stringify(newTask));
                         } else {
                             res.statusCode = 400;
-                            res.end("The body of the request is invalid.");
+                            res.end("Received data has wrong structure. Check if data has correct properties.");
                         }
                     });
                     req.on('end', () => {
                         if (!data) {
                             res.statusCode = 400;
-                            res.end("The body is empty.");
+                            res.end("The request doesn't have data.");
                         }
                     });
                 } else {
@@ -106,7 +106,7 @@ async function init() {
                             data = JSON.parse(chunk);
                         } catch (e) {
                             res.statusCode = 400;
-                            res.end("The body of the request is invalid.");
+                            res.end("Received wrong type of data. Expected JSON.");
                             return;
                         }
 
@@ -131,13 +131,13 @@ async function init() {
                             res.end(JSON.stringify(tasks[targetIndex]));
                         } else {
                             res.statusCode = 400;
-                            res.end("The body of the request is invalid.");
+                            res.end("Received data has wrong structure. Check if data has correct properties.");
                         }
                     });
                     req.on('end', () => {
                         if (!data) {
                             res.statusCode = 400;
-                            res.end("The body of the request is invalid.");
+                            res.end("The request doesn't have data.");
                         }
                     });
                 } else {
