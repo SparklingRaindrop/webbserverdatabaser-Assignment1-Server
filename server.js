@@ -1,6 +1,5 @@
 const http = require('http');
-const fs = require('fs/promises');
-const { existsSync } = require('fs');
+const { read, save } = require('./fileHandler');
 
 const PORT = 5000;
 const file = './data.json';
@@ -71,7 +70,7 @@ async function init() {
                             newTask.id = Number(Date.now().toString() + parseInt(Math.random() * 10000));
                             newTask.completion = data.completion;
                             tasks.push(newTask);
-                            save(tasks);
+                            save(file, tasks);
     
                             res.statusCode = 201;
                             res.end(JSON.stringify(newTask));
@@ -125,7 +124,7 @@ async function init() {
                                 }
                             }
     
-                            save(tasks);
+                            save(file, tasks);
     
                             res.statusCode = 200;
                             res.end(JSON.stringify(tasks[targetIndex]));
@@ -150,7 +149,7 @@ async function init() {
                 if (targetIndex > -1) {
                     tasks.splice(targetIndex, 1);
     
-                    save(tasks);
+                    save(file, tasks);
     
                     res.statusCode = 204;
                     res.end();
@@ -202,29 +201,4 @@ function isValid(data, method = 'PUT', srcID) {
         Object.keys(properties).length === keys.length &&
         data.id === srcID
     );
-}
-
-async function read() {
-    if (!existsSync(file)) {
-        console.log('Creating a new save file');
-        await fs.writeFile(file, JSON.stringify([]));
-        console.log('Created a new save file');
-    }
-    try {
-        const rawData = await fs.readFile(file);
-        const result = JSON.parse(rawData);
-        console.log('Read file completed');
-        return result;
-    } catch (e) {
-        console.log('Could not read the data: ', e.message);
-    }
-}
-
-async function save(tasks) {
-    try {
-        await fs.writeFile(file, JSON.stringify(tasks));
-        console.log('Save completed');
-    } catch (e) {
-        console.log('Could not save the data: ', e.message);
-    }
 }
