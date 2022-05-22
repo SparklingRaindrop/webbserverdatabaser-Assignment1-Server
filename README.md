@@ -1,21 +1,28 @@
 # To-do list API
-- It is written in vanilla Node.js and can only run locally.  
-- It only allows access from **http://localhost:3000**.  
-- If you want to use it from another server, change the header setting.  
+- Written in vanilla Node.js and can only be run locally.  
+- Can only be accessed from **http://localhost:3000**  
+- If you want to use it from another port, change it in the header setting.  
 `res.setHeader('Access-Control-Allow-Origin', 'http://localhost:3000');`
+
+## **How to use it**
+You need [Node.js](https://nodejs.org/en/) in order to run this app.  
   
-## Resource
-There is only one resource in To-do list API.
-- http://localhost:5000/todos
-  
-## How to use it
-- You need [Node.js](https://nodejs.org/en/) in order to run this app.  
-  
-To run server (in terminal)
+To run server, write in terminal
 ```
 node server.js
 ```
-Then server will run on http://localhost:5000/
+Then server will run on http://localhost:5000/ 
+
+---
+  
+### **<mark>GET</mark> http://localhost:5000/todos/{id}**
+Calling API without an ID will return a list of all the saved tasks.
+
+| Name      | Description | Type   |
+| ----------- | ----------- | ----- |
+| taskName  | Task name | string
+| id | ID of the task  | number
+| completion | Task Completion Status | boolean
 
 **Get all the tasks**
 ```javascript
@@ -59,7 +66,16 @@ fetch('http://localhost:5000/todos/16528656609342060')
 }
 ```
 
-**Add a new task**
+---
+
+### **<mark>POST</mark> http://localhost:5000/todos/**
+Adding a new task to the database.
+
+| Name      | Description | Type   |
+| ----------- | ----------- | ----- |
+| taskName  | Task name | string
+| completion | Task Completion Status | boolean
+
 ```javascript
 fetch('http://localhost:5000/todos/', {
     method: 'POST',
@@ -82,7 +98,18 @@ fetch('http://localhost:5000/todos/', {
     "completion": false
 }
 ```
-**Update a task**
+
+---
+
+### **<mark>PATCH or PUT</mark>  http://localhost:5000/todos/{ID}**
+Updating a task on the database. ID is immutable.
+
+| Name      | Description | Type   |
+| ----------- | ----------- | ----- |
+| taskName  | Task name | string |
+| id | ID of the task  | number |
+| completion | Task Completion Status | boolean |
+
 ```javascript
 fetch('http://localhost:5000/todos/16528656609342060', {
     method: 'PATCH',
@@ -122,7 +149,16 @@ fetch('http://localhost:5000/todos/16528656609342060', {
     "completion": false
 }
 ```
-**Delete a task**
+
+---
+
+### **<mark>DELETE</mark> http://localhost:5000/todos/{ID}**
+Deleting a task on the database.
+
+| Name      | Description | Type   |
+| ----------- | ----------- | ----- |
+| id | ID of the task  | number |
+
 ```javascript
 fetch('http://localhost:5000/todos/16528656609342060', {
     method: 'DELETE'
