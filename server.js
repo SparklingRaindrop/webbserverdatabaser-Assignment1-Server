@@ -2,12 +2,12 @@ const http = require('http');
 const { read, save } = require('./fileHandler');
 
 const PORT = 5000;
-const file = './data.json';
+const FILE = './data.json';
 
 init();
 
 async function init() {
-    const tasks = await read(file);
+    const tasks = await read(FILE);
     
     const server = http.createServer((req, res) => {
         res.setHeader('Access-Control-Allow-Origin', 'http://localhost:3000');
@@ -21,144 +21,139 @@ async function init() {
         // All the request URL has to begin with 'todos'
         if (directory[0] !== 'todos') {
             res.statusCode = 404;
-            res.end();
+            res.end('Unknown path.');
             return;
         }
     
         const method = req.method;
         const targetId = Number(directory[1]);
-        const targetIndex = tasks.findIndex(task => task.id === targetId);
-        switch (method) {
-            case 'OPTIONS':
-                res.statusCode = 200;
-                res.end();
-            break;
-            case 'GET':
-                if (directory.length === 1) {
-                    res.writeHead(200, {
-                        'Content-Type': 'application/json'
-                    });
-                    res.end(JSON.stringify(tasks));
-                } else if (directory.length === 2) {
-                    if (targetIndex > -1) {
-                        res.writeHead(200, {
-                            'Content-Type': 'application/json'
-                        });
-                        res.end(JSON.stringify(tasks[targetIndex]));
-                    } else { 
-                        res.statusCode = 404;
-                        res.end(`Data with ID[${targetId}] doesn't exist.`);
-                    }
-                }
-            break;
-            case 'POST':
-                if (directory.length === 1) {
-                    let data;
-                    req.on('data', (chunk) => {
-
-                        try {
-                            data = JSON.parse(chunk);
-                        } catch (e) {
-                            res.statusCode = 400;
-                            res.end("Received wrong type of data. Expected JSON.");
-                            return;
-                        }
-
-                        if(isValid(data, 'POST')) {
-                            const newTask = {};
-                            newTask.taskName = data.taskName;
-                            newTask.id = Number(Date.now().toString() + parseInt(Math.random() * 10000));
-                            newTask.completion = data.completion;
-                            tasks.push(newTask);
-                            save(file, tasks);
-    
-                            res.statusCode = 201;
-                            res.end(JSON.stringify(newTask));
-                        } else {
-                            res.statusCode = 400;
-                            res.end("Received data has wrong structure. Check if data has correct properties.");
-                        }
-                    });
-                    req.on('end', () => {
-                        if (!data) {
-                            res.statusCode = 400;
-                            res.end("The request doesn't have data.");
-                        }
-                    });
-                } else {
-                    res.statusCode = 405;
-                    res.end(`Wrong endpoint for the ${method} request.`);
-                }
-            break;
-            case 'PUT':
-            case 'PATCH':
-                if(directory.length !== 2) {
-                    res.statusCode = 405;
-                    res.end(`Wrong endpoint for the ${method} request.`);
+        const targetIndex = directory.length === 2 ?
+            tasks.findIndex(task => task.id === targetId) :
+            null;
+        if (method === 'OPTIONS') {
+            res.statusCode = 200;
+            res.end();
+        } else if (method === 'GET') {
+            let requestedData;
+            
+            if (directory.length === 1) {
+                requestedData = tasks;
+            } else if (directory.length === 2) {
+                if (targetIndex < 0) {
+                    res.statusCode = 404;
+                    res.end(`Data with ID[${targetId}] doesn't exist.`);
                     return;
                 }
-                if (targetIndex > -1) {
-                    let data;
-                    req.on('data', (chunk) => {
+                requestedData = tasks[targetIndex];
+            } else {
+                res.statusCode = 400;
+                res.end(`Unknown endpoint for ${method} request.`);
+                return;
+            }
 
-                        try {
-                            data = JSON.parse(chunk);
-                        } catch (e) {
-                            res.statusCode = 400;
-                            res.end("Received wrong type of data. Expected JSON.");
-                            return;
-                        }
+            res.writeHead(200, {'Content-Type': 'application/json'});
+            res.end(JSON.stringify(requestedData));
+            return;
 
-                        if(isValid(data, method, targetId)) {
-                            if (method === 'PUT') {
-                                const newData = {
-                                    taskName: data.taskName,
-                                    id: data.id,
-                                    completion: data.completion,
-                                };
-                                tasks[targetIndex] = newData;
-                            } else {
-                                tasks[targetIndex] = {
-                                    ...tasks[targetIndex],
-                                    ...data,
-                                }
-                            }
-    
-                            save(file, tasks);
-    
-                            res.statusCode = 200;
-                            res.end(JSON.stringify(tasks[targetIndex]));
-                        } else {
-                            res.statusCode = 400;
-                            res.end("Received data has wrong structure. Check if data has correct properties.");
-                        }
-                    });
-                    req.on('end', () => {
-                        if (!data) {
-                            res.statusCode = 400;
-                            res.end("The request doesn't have data.");
-                        }
-                    });
-                } else {
-                    // There is no such data with the provided ID 
+        } else if (method === 'DELETE') {
+            if(directory.length !== 2) {
+                res.statusCode = 405;
+                res.end(`Unknown endpoint for ${method} request.`);
+                return;
+            }
+            if (targetIndex < 0) {
+                res.statusCode = 404;
+                res.end(`Data with ID[${targetId}] doesn't exist.`);
+                return;
+            }
+
+            tasks.splice(targetIndex, 1);
+            save(FILE, tasks);
+            res.statusCode = 204;
+            res.end();
+            return;
+
+        } else {
+
+            let data;
+            req.on('data', (chunk) => {
+                if (method !== 'POST' && targetIndex < 0) {
                     res.statusCode = 404;
                     res.end(`Data with ID[${targetId}] doesn't exist.`);
+                    return;
                 }
-            break;
-            case 'DELETE':
-                if (targetIndex > -1) {
-                    tasks.splice(targetIndex, 1);
-    
-                    save(file, tasks);
-    
-                    res.statusCode = 204;
-                    res.end();
-                } else {
-                    // There is no such data with the provided ID 
-                    res.statusCode = 404;
-                    res.end(`Data with ID[${targetId}] doesn't exist.`);
+                // Checking data type
+                try {
+                    data = JSON.parse(chunk);
+                } catch (e) {
+                    res.statusCode = 415;
+                    res.end("Received wrong type of data. Expected JSON.");
+                    return;
                 }
-            break;
+
+                if(!isValid(data, method, targetId)) {
+                    res.statusCode = 400;
+                    res.end(
+                        `Received data has wrong structure. Check if data has correct properties.`
+                    );
+                    return;
+                }
+
+                if (method === 'POST') {
+                    if (directory.length !== 1) {
+                        res.statusCode = 400;
+                        res.end(`Unknown endpoint. ${method} doesn't take a parameter.`);
+                        return;
+                    }
+                    const newTask = {};
+                    newTask.taskName = data.taskName;
+                    newTask.id = generateId();
+                    newTask.completion = data.completion;
+                    tasks.push(newTask);
+
+                    save(FILE, tasks);
+
+                    res.statusCode = 201;
+                    res.end(JSON.stringify(newTask));
+
+                } else if (method === 'PUT' || method === 'PATCH') {
+                    if(directory.length !== 2) {
+                        res.statusCode = 400;
+                        res.end(`Wrong path for the ${method} request.`);
+                        return;
+                    }
+                    if (targetIndex < 0) {
+                        res.statusCode = 404;
+                        res.end(`Data with ID[${targetId}] doesn't exist.`);
+                        return;
+                    }
+
+                    if (method === 'PUT') {
+                        const newData = {
+                            taskName: data.taskName,
+                            id: data.id,
+                            completion: data.completion,
+                        };
+                        tasks[targetIndex] = newData;
+                    } else {
+                        tasks[targetIndex] = {
+                            ...tasks[targetIndex],
+                            ...data,
+                        }
+                    }
+
+                    save(FILE, tasks);
+
+                    res.statusCode = 200;
+                    res.end(JSON.stringify(tasks[targetIndex]));
+                }
+            });
+            req.on('end', () => {
+                if (!data) {
+                    res.statusCode = 400;
+                    res.end("The request doesn't have data. Body is empty.");
+                }
+            });
         }
     });
 
@@ -167,7 +162,7 @@ async function init() {
     });
 }
 
-function isValid(data, method = 'PUT', srcID) {
+function isValid(data, method, srcID) {
     const properties = {
         completion: "boolean",
         id: "number",
@@ -200,5 +195,11 @@ function isValid(data, method = 'PUT', srcID) {
         hasCorrectTypes && 
         Object.keys(properties).length === keys.length &&
         data.id === srcID
+    );
+}
+
+function generateId() {
+    return Number(
+        Date.now().toString() + parseInt(Math.random() * 10000)
     );
 }
