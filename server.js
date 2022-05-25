@@ -17,8 +17,14 @@ async function init() {
     const server = http.createServer((req, res) => {
         res.setHeader('Access-Control-Allow-Origin', 'http://localhost:3000');
         res.setHeader("Access-Control-Allow-Methods", "GET, PATCH, DELETE, OPTIONS, POST, PUT");
-        res.setHeader("Access-Control-Allow-Headers",
-            "Access-Control-Allow-Headers, Origin,Accept, X-Requested-With, Content-Type, Access-Control-Request-Method, Access-Control-Request-Headers"
+        res.setHeader(
+            "Access-Control-Allow-Headers",
+            "Access-Control-Allow-Headers"
+            + ", Origin,Accept"
+            + ", X-Requested-With"
+            + ", Content-Type"
+            + ", Access-Control-Request-Method"
+            + ", Access-Control-Request-Headers"
         );
         console.log(`Received request to ${req.url} with method ${req.method}`);
     
@@ -29,7 +35,7 @@ async function init() {
             res.end('Unknown path.');
             return;
         }
-    
+
         const method = req.method;
         const targetId = Number(path[1]);
         const targetIndex = path.length === 2 ?
@@ -39,54 +45,14 @@ async function init() {
             res.statusCode = 200;
             res.end();
         } else if (method === 'GET') {
-            let requestedData;
-            
-            if (path.length === 1) {
-                requestedData = tasks;
-            } else if (path.length === 2) {
-                if (targetIndex < 0) {
-                    res.statusCode = 404;
-                    res.end(`Data with ID[${targetId}] doesn't exist.`);
-                    return;
-                }
-                requestedData = tasks[targetIndex];
-            } else {
-                res.statusCode = 400;
-                res.end(`Unknown endpoint for ${method} request.`);
-                return;
-            }
-
-            res.writeHead(200, {'Content-Type': 'application/json'});
-            res.end(JSON.stringify(requestedData));
+            handleGetRequest(res, path, tasks, targetIndex);
             return;
-
         } else if (method === 'DELETE') {
-            if(path.length !== 2) {
-                res.statusCode = 400;
-                res.end(`Unknown endpoint for ${method} request.`);
-                return;
-            }
-            if (targetIndex < 0) {
-                res.statusCode = 404;
-                res.end(`Data with ID[${targetId}] doesn't exist.`);
-                return;
-            }
-
-            tasks.splice(targetIndex, 1);
-            save(FILE, tasks);
-            res.statusCode = 204;
-            res.end();
+            handleDeleteRequest(res, path, tasks, targetIndex);
             return;
-
         } else {
-
             let data;
             req.on('data', (chunk) => {
-                if (method !== 'POST' && targetIndex < 0) {
-                    res.statusCode = 404;
-                    res.end(`Data with ID[${targetId}] doesn't exist.`);
-                    return;
-                }
                 // Checking data type
                 try {
                     data = JSON.parse(chunk);
@@ -95,7 +61,7 @@ async function init() {
                     res.end("Received wrong type of data. Expected JSON.");
                     return;
                 }
-
+                // Checking data structure
                 if(!isValid(data, method, targetId)) {
                     res.statusCode = 400;
                     res.end(
@@ -105,54 +71,12 @@ async function init() {
                 }
 
                 if (method === 'POST') {
-                    if (path.length !== 1) {
-                        res.statusCode = 400;
-                        res.end(`Unknown endpoint. ${method} doesn't take a parameter.`);
-                        return;
-                    }
-                    const newTask = {};
-                    newTask.taskName = data.taskName;
-                    newTask.id = generateId();
-                    newTask.completion = data.completion;
-                    tasks.push(newTask);
-
-                    save(FILE, tasks);
-
-                    res.statusCode = 201;
-                    res.end(JSON.stringify(newTask));
-
+                    handlePostRequest(res, path, tasks, data);
                 } else if (method === 'PUT' || method === 'PATCH') {
-                    if(path.length !== 2) {
-                        res.statusCode = 400;
-                        res.end(`Wrong path for the ${method} request.`);
-                        return;
-                    }
-                    if (targetIndex < 0) {
-                        res.statusCode = 404;
-                        res.end(`Data with ID[${targetId}] doesn't exist.`);
-                        return;
-                    }
-
-                    if (method === 'PUT') {
-                        const newData = {
-                            taskName: data.taskName,
-                            id: data.id,
-                            completion: data.completion,
-                        };
-                        tasks[targetIndex] = newData;
-                    } else {
-                        tasks[targetIndex] = {
-                            ...tasks[targetIndex],
-                            ...data,
-                        }
-                    }
-
-                    save(FILE, tasks);
-
-                    res.statusCode = 200;
-                    res.end(JSON.stringify(tasks[targetIndex]));
+                    handleUpdateRequest(res, path, tasks, targetIndex, data, method);
                 }
             });
+
             req.on('end', () => {
                 if (!data) {
                     res.statusCode = 400;
@@ -173,7 +97,6 @@ function isValid(data, method, srcID) {
     const hasCorrectTypes = keys.every(key => typeof data[key] === PROPERTIES[key]);
     const hasRequiredProps = keys.every(key => Object.keys(PROPERTIES).includes(key));
     if (method === 'POST') {
-        
         // On POST request, ID will be generated by the server
         return (
             hasRequiredProps &&
@@ -182,13 +105,11 @@ function isValid(data, method, srcID) {
             !data.id);
 
     } else if (method === 'PATCH') {
-        
         // ID is immutable 
         if (data.id) {
             return hasRequiredProps && hasCorrectTypes && data.id === srcID;
         }
         return hasRequiredProps && hasCorrectTypes;
-
     }
     return (
         hasRequiredProps && 
@@ -202,4 +123,94 @@ function generateId() {
     return Number(
         Date.now().toString() + parseInt(Math.random() * 10000)
     );
+}
+
+function handleGetRequest(res, path, tasks, targetIndex) {
+    let requestedData;
+    if (path.length === 1) {
+        requestedData = tasks;
+    } else if (path.length === 2) {
+        if (targetIndex < 0) {
+            res.statusCode = 404;
+            res.end(`Data with ID[${path[1]}] doesn't exist.`);
+            return;
+        }
+        requestedData = tasks[targetIndex];
+    } else {
+        res.statusCode = 400;
+        res.end(`Unknown endpoint for GET request.`);
+        return;
+    }
+
+    res.writeHead(200, {'Content-Type': 'application/json'});
+    res.end(JSON.stringify(requestedData));
+}
+
+function handleDeleteRequest(res, path, tasks, targetIndex) {
+    if(path.length !== 2) {
+        res.statusCode = 400;
+        res.end(`Unknown endpoint for DELETE request.`);
+        return;
+    }
+    if (targetIndex < 0) {
+        res.statusCode = 404;
+        res.end(`Data with ID[${path[1]}] doesn't exist.`);
+        return;
+    }
+
+    tasks.splice(targetIndex, 1);
+    save(FILE, tasks);
+    res.statusCode = 204;
+    res.end();
+}
+
+function handlePostRequest(res, path, tasks, data) {
+    if (path.length !== 1) {
+        res.statusCode = 400;
+        res.end(`Unknown endpoint. POST doesn't take a parameter.`);
+        return;
+    }
+
+    const newTask = {};
+    newTask.taskName = data.taskName;
+    newTask.id = generateId();
+    newTask.completion = data.completion;
+    tasks.push(newTask);
+
+    save(FILE, tasks);
+
+    res.statusCode = 201;
+    res.end(JSON.stringify(newTask));
+}
+
+function handleUpdateRequest(res, path, tasks, targetIndex, data, method) {
+    if(path.length !== 2) {
+        res.statusCode = 400;
+        res.end(`Wrong path for the ${method} request.`);
+        return;
+    }
+    if (targetIndex < 0) {
+        res.statusCode = 404;
+        res.end(`Data with ID[${path[1]}] doesn't exist.`);
+        return;
+    }
+
+    if (method === 'PUT') {
+        const newData = {
+            taskName: data.taskName,
+            id: data.id,
+            completion: data.completion,
+        };
+        tasks[targetIndex] = newData;
+    } else {
+        tasks[targetIndex] = {
+            ...tasks[targetIndex],
+            ...data,
+        }
+    }
+
+    save(FILE, tasks);
+
+    res.statusCode = 200;
+    res.end(JSON.stringify(tasks[targetIndex]));
 }
