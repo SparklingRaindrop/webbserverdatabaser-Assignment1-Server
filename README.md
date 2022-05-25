@@ -17,7 +17,7 @@ If you want to run on another port, change the port number.
 
 ---
   
-### **<mark>GET</mark> http://localhost:5000/todos/{id}**
+### **<mark>GET</mark> /todos/:id**
 Calling API without an ID will return a list of all the saved tasks.
 
 | Name      | Description | Type   |
@@ -70,7 +70,7 @@ fetch('http://localhost:5000/todos/16528656609342060')
 
 ---
 
-### **<mark>POST</mark> http://localhost:5000/todos/**
+### **<mark>POST</mark> /todos/**
 Adding a new task to the database.
 
 | Name      | Description | Type   |
@@ -103,7 +103,7 @@ fetch('http://localhost:5000/todos/', {
 
 ---
 
-### **<mark>PATCH or PUT</mark>  http://localhost:5000/todos/{ID}**
+### **<mark>PATCH or PUT</mark>  /todos/:ID**
 Updating a task on the database. ID is immutable.
 
 | Name      | Description | Type   |
@@ -154,7 +154,7 @@ fetch('http://localhost:5000/todos/16528656609342060', {
 
 ---
 
-### **<mark>DELETE</mark> http://localhost:5000/todos/{ID}**
+### **<mark>DELETE</mark> /todos/:ID**
 Deleting a task on the database.
 
 | Name      | Description | Type   |

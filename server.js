@@ -22,17 +22,17 @@ async function init() {
         );
         console.log(`Received request to ${req.url} with method ${req.method}`);
     
-        const directory = req.url.split('/').filter(item => item !== '');
+        const path = req.url.split('/').filter(item => item !== '');
         // All the request URL has to begin with 'todos'
-        if (directory[0] !== 'todos') {
+        if (path[0] !== 'todos') {
             res.statusCode = 404;
             res.end('Unknown path.');
             return;
         }
     
         const method = req.method;
-        const targetId = Number(directory[1]);
-        const targetIndex = directory.length === 2 ?
+        const targetId = Number(path[1]);
+        const targetIndex = path.length === 2 ?
             tasks.findIndex(task => task.id === targetId) :
             null;
         if (method === 'OPTIONS') {
@@ -41,9 +41,9 @@ async function init() {
         } else if (method === 'GET') {
             let requestedData;
             
-            if (directory.length === 1) {
+            if (path.length === 1) {
                 requestedData = tasks;
-            } else if (directory.length === 2) {
+            } else if (path.length === 2) {
                 if (targetIndex < 0) {
                     res.statusCode = 404;
                     res.end(`Data with ID[${targetId}] doesn't exist.`);
@@ -61,7 +61,7 @@ async function init() {
             return;
 
         } else if (method === 'DELETE') {
-            if(directory.length !== 2) {
+            if(path.length !== 2) {
                 res.statusCode = 400;
                 res.end(`Unknown endpoint for ${method} request.`);
                 return;
@@ -105,7 +105,7 @@ async function init() {
                 }
 
                 if (method === 'POST') {
-                    if (directory.length !== 1) {
+                    if (path.length !== 1) {
                         res.statusCode = 400;
                         res.end(`Unknown endpoint. ${method} doesn't take a parameter.`);
                         return;
@@ -122,7 +122,7 @@ async function init() {
                     res.end(JSON.stringify(newTask));
 
                 } else if (method === 'PUT' || method === 'PATCH') {
-                    if(directory.length !== 2) {
+                    if(path.length !== 2) {
                         res.statusCode = 400;
                         res.end(`Wrong path for the ${method} request.`);
                         return;
