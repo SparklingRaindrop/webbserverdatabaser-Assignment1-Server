@@ -103,7 +103,7 @@ fetch('http://localhost:5000/todos/', {
 
 ---
 
-### **<mark>PATCH or PUT</mark>  /todos/:ID**
+### **<mark>PATCH or PUT</mark> /todos/:ID**
 Updating a task on the database. ID is immutable.
 
 | Name      | Description | Type   |
