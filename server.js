@@ -159,7 +159,7 @@ function handleDeleteRequest(res, path, tasks, targetIndex) {
     }
 
     tasks.splice(targetIndex, 1);
-    save(FILE, tasks);
+    save(res, FILE, tasks);
     res.statusCode = 204;
     res.end();
 }
@@ -177,7 +177,7 @@ function handlePostRequest(res, path, tasks, data) {
     newTask.completion = data.completion;
     tasks.push(newTask);
 
-    save(FILE, tasks);
+    save(res, FILE, tasks);
 
     res.statusCode = 201;
     res.end(JSON.stringify(newTask));
@@ -209,7 +209,7 @@ function handleUpdateRequest(res, path, tasks, targetIndex, data, method) {
         }
     }
 
-    save(FILE, tasks);
+    save(res, FILE, tasks);
 
     res.statusCode = 200;
     res.end(JSON.stringify(tasks[targetIndex]));

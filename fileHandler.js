@@ -17,11 +17,13 @@ module.exports.read = async function read(file) {
     }
 }
 
-module.exports.save = async function save(file, tasks) {
+module.exports.save = async function save(res, file, tasks) {
     try {
         await fs.writeFile(file, JSON.stringify(tasks));
         console.log('Save completed');
     } catch (e) {
         console.log('Could not save the data: ', e.message);
+        res.statusCode = 500;
+        res.end('The server encountered a problem.');
     }
 }
