@@ -65,7 +65,7 @@ async function init() {
                 if(!isValid(data, method, targetId)) {
                     res.statusCode = 400;
                     res.end(
-                        `Received data has wrong structure. Check if data has correct properties.`
+                        `Received data has wrong structure. Check if data has correct properties and values.`
                     );
                     return;
                 }
